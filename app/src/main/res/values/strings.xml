@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">GPS Coordinates</string>
+    <string name="btn_get_gps">Locate Me</string>
+    <string name="txt_loc_text">Press Locate Me to get the location</string>
+</resources>
