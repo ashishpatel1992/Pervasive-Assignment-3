@@ -28,71 +28,63 @@ public class MainActivity extends AppCompatActivity {
     ComponentName service;
     Intent intentMyService;
     String GPS_FILTER = "gpscoordinates.action.GPS_LOCATION";
-
-//    public void getGPSCoordinates(){
-//       if(
-//               ActivityCompat.checkSelfPermission(MainActivity.this,Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-//               ActivityCompat.checkSelfPermission(MainActivity.this,Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
-//       ){
-//           ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION},1);
-//        }else{
-//           LocationListener locationListener = new UserLocationService().new UserLocationListener(LocationManager.GPS_PROVIDER);
-////           locationListener.onLocationChanged();
-//
-//           startService(new Intent(this,UserLocationService.class));
-//
-//            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000,0,locationListener);
-////           Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-//           Location location =null;
-////           locationListener.onLocationChanged(location);
-////           location = locationManager.
-//           if(location != null){
-//               double lat = location.getLatitude();
-//               double lng = location.getLongitude();
-//               loc_text.setText(lat+" "+lng);
-//           }else{
-//               Toast.makeText(this,"Unable to find location",Toast.LENGTH_SHORT).show();
-//           }
-//       }
-//
-//    }
-
     GPSBroadcastReceiver receiver;
-    public void GPSService(){
-        loc_text.setText("Getting GPS");
-        Log.i(TAG, "GPSService: ");
-        intentMyService = new Intent(this,UserLocationService.class);
 
+    /**
+     * Creates a GPS Service that runs in background
+     */
+    public void GPSService() {
+        /**
+         * TODO 2: Display "Getting location coordinates" in the main Activity while the coordinates are being fetched after pressing the button (2 marks)
+         */
+        loc_text.setText("Getting location coordinates...\nStay outdoors for better GPS signal");
+        btn_getGPS.setEnabled(false);
+        Log.i(TAG, "GPSService: ");
+        intentMyService = new Intent(this, UserLocationService.class);
+        /**
+         * TODO 3: After the button press, the main activity starts a service (4 marks)
+         */
         service = startService(intentMyService);
 
         IntentFilter intentFilter = new IntentFilter(GPS_FILTER);
-//        intentFilter.addAction("UserLocation");
 
         receiver = new GPSBroadcastReceiver();
-        registerReceiver(receiver,intentFilter);
-        Toast.makeText(getApplicationContext(),"GPS Service Started",Toast.LENGTH_SHORT).show();
+        registerReceiver(receiver, intentFilter);
 
+        Toast.makeText(getApplicationContext(), "GPS Service Started", Toast.LENGTH_SHORT).show();
         Log.i(TAG, "GPSService END ");
-//        stopService(new Intent(intentMyService));
     }
-    private class GPSBroadcastReceiver extends BroadcastReceiver{
+
+
+    private class GPSBroadcastReceiver extends BroadcastReceiver {
+        /**
+         * Receives GPS coordinates from the service and updates in Main UI
+         */
         @Override
         public void onReceive(Context context, Intent userLocation) {
             Log.i(TAG, "onReceive: ");
-            double lat = userLocation.getDoubleExtra("lat",-1);
-            double lng = userLocation.getDoubleExtra("lng",-1);
-            String msg = "Latitude: "+lat+", Longitude: "+lng;
+            double lat = userLocation.getDoubleExtra("lat", -1);
+            double lng = userLocation.getDoubleExtra("lng", -1);
+            String msg = "Latitude: " + lat + ", Longitude: " + lng;
             Log.i(TAG, msg);
-            Toast.makeText(context,msg,Toast.LENGTH_SHORT).show();
+            /**
+             * TODO 6: The main activity displays the coordinates (2 marks)
+             */
             loc_text.setText(msg);
+            btn_getGPS.setEnabled(true);
 
-//            stopService(locationIntent);
         }
-
     }
-    public boolean enableGPS(){
+
+    /**
+     * Creates a Alert Dialog asking the user to turn on the GPS
+     *
+     * @return true if GPS is turned On
+     */
+    public boolean enableGPS() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Enable GPS").setCancelable(false).setPositiveButton("Yes", new  DialogInterface.OnClickListener() {
+
+        builder.setMessage("Please turn on your GPS").setCancelable(false).setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
@@ -103,10 +95,12 @@ public class MainActivity extends AppCompatActivity {
                 dialog.cancel();
             }
         });
+
         final AlertDialog alertDialog = builder.create();
         alertDialog.show();
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -114,18 +108,31 @@ public class MainActivity extends AppCompatActivity {
 
         btn_getGPS = findViewById(R.id.btn_get_gps);
         loc_text = findViewById(R.id.txt_loc_text);
-        //final Activity thisActivity = this;
-        ActivityCompat.requestPermissions( this,
-                new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        /**
+         * Ask for GPS Permission from user
+         */
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        /*
+        TODO 1:  In the main activity, there is a button to get current GPS coordinates (2 marks)
+         */
         btn_getGPS.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View view) {
-                Log.e(TAG, "onClick: ");
+                Log.i(TAG, "onClick: ");
                 locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+                /**
+                 * Check if GPS permission is not granted
+                 */
                 if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     loc_text.setText("Please turn on your GPS");
-                    if(enableGPS()){
-                        loc_text.setText("GPS is Turned On. Click to Fetch");
+                    /**
+                     * Turn on GPS as it is disabled
+                     */
+                    if (enableGPS()) {
+                        loc_text.setText("Press Locate Me to get the location\nStay outdoors for better GPS signal");
                     }
 
                 } else {
@@ -139,11 +146,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        try{
+        try {
             stopService(intentMyService);
             unregisterReceiver(receiver);
-//            unregisterReceiver(re);
-        }catch (Exception e){
+        } catch (Exception e) {
             Log.i(TAG, "onDestroy: Main");
         }
 

@@ -16,56 +16,55 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 
-// TODO 1: https://stackoverflow.com/questions/8828639/get-gps-location-via-a-service-in-android
-// TODO 2: https://github.com/codepath/android_guides/issues/220
 public class UserLocationService extends Service {
+    private LocationManager locationManager;
+    private Thread userLocationThread;
+    private GPSListener myLocationListener;
     private final String TAG = "ULS: locationTag";
     String GPS_FILTER = "gpscoordinates.action.GPS_LOCATION";
-//    String GPS_FILTER ="dev.ashishpatel.gpscoordinates"
-    private LocationManager locationManager;
-
-    Thread userLocationThread;
-    GPSListener myLocationListener;
-    private static final int LOCATION_INTERVAL = 1000;
-    private static final float LOCATION_DISTANCE = 10f;
-    public UserLocationService(){
-        Log.i(TAG, "UserLocationService: ");
-    }
 
     class GPSListener implements LocationListener {
-//        Location lastLoc;
-
-
         @Override
         public void onLocationChanged(Location location) {
-            Log.e(TAG, "onLocationChanged Called");
-            double lat = location.getLatitude();
-            double lng = location.getLongitude();
+            Log.i(TAG, "onLocationChanged Called");
 
-            Intent userLocation = new Intent(GPS_FILTER);
-            userLocation.putExtra("lat",lat);
-            userLocation.putExtra("lng",lng);
-            Log.i(TAG, "onLocationChanged: Lat: "+lat+", Lng: "+lng );
-            sendBroadcast(userLocation);
+            if (location != null) {
+                try {
+                    locationManager.removeUpdates(this);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to remove locationListener", e);
+                }
 
-            //Save the last location
-//            lastLoc = location;
+                double lat = location.getLatitude();
+                double lng = location.getLongitude();
+
+                Intent userLocation = new Intent(GPS_FILTER);
+                userLocation.putExtra("lat", lat);
+                userLocation.putExtra("lng", lng);
+                Log.i(TAG, "onLocationChanged: Lat: " + lat + ", Lng: " + lng);
+                /**
+                 * TODO 5: When the callback function is called, it sends the coordinates to the main activity via a broadcast message (4 marks)
+                 */
+                sendBroadcast(userLocation);
+            }
+
         }
 
         @Override
         public void onProviderEnabled(String s) {
-            Log.e(TAG, "onProviderEnabled Called");
+            Log.i(TAG, "onProviderEnabled Called");
         }
 
         @Override
         public void onProviderDisabled(String s) {
-            Log.e(TAG, "onProviderDisabled Called");
+            Log.i(TAG, "onProviderDisabled Called");
         }
 
         @Override
         public void onStatusChanged(String s, int i, Bundle bundle) {
-            Log.e(TAG, "onStatusChanged Called");
+            Log.i(TAG, "onStatusChanged Called");
         }
+
     }
 
 
@@ -79,36 +78,46 @@ public class UserLocationService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
         Log.i(TAG, "onStartCommand: ");
+        /**
+         * TODO 4: The service starts a new thread that registers a callback function to receive the coordinates (4 marks)
+         */
         userLocationThread = new Thread(new Runnable() {
+
             @Override
             public void run() {
-                try{
+                try {
+                    /**
+                     * Run the thread in loop to process the location requests
+                     */
                     Looper.prepare();
-
-
                     locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
                     myLocationListener = new GPSListener();
-                    if(ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-
-                        Log.i(TAG, "No Permission ");//                        return;
-                    }else{
+                    /**
+                     * Verify if GPS permission is granted
+                     */
+                    if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        Log.i(TAG, "No Permission ");
+                        return;
+                    } else {
                         Log.i(TAG, "permission Granted");
                     }
-                    long minTime = 0;
+                    long minTime = 1000;
                     float minDistance = 0;
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,minTime,minDistance, myLocationListener);
-
-//                    Location lx = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-//                    Log.i(TAG, "longitude: "+lx.getLongitude());
-//                    Log.i(TAG, "Latitude: "+lx.getLatitude());
-
+                    /**
+                     * Request for location from GPS hardware
+                     */
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, myLocationListener);
                     Looper.loop();
 
-                }catch (Exception e){
-                    Log.e(TAG, "ThreadRun: ",e );
+                } catch (Exception e) {
+                    Log.e(TAG, "ThreadRun: ", e);
                 }
+
             }
         });
+        /**
+         * Start the service as separate thread
+         */
         userLocationThread.start();
         return START_STICKY;
     }
@@ -116,41 +125,12 @@ public class UserLocationService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.e(TAG, "onCreate");
-//        initializeLocationManager();
-//        try {
-//            locationManager.requestLocationUpdates(
-//                    LocationManager.NETWORK_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
-//                    locationListeners[1]);
-//        } catch (java.lang.SecurityException ex) {
-//            Log.i(TAG, "fail to request location update, ignore", ex);
-//        } catch (IllegalArgumentException ex) {
-//            Log.d(TAG, "network provider does not exist, " + ex.getMessage());
-//        }
-//        try {
-//            locationManager.requestLocationUpdates(
-//                    LocationManager.GPS_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
-//                    locationListeners[0]);
-//        } catch (java.lang.SecurityException ex) {
-//            Log.i(TAG, "fail to request location update, ignore", ex);
-//        } catch (IllegalArgumentException ex) {
-//            Log.d(TAG, "gps provider does not exist " + ex.getMessage());
-//        }
+        Log.i(TAG, "onCreate");
     }
 
     @Override
     public void onDestroy() {
-        Log.e(TAG, "onDestroy");
+        Log.i(TAG, "onDestroy");
         super.onDestroy();
-
-//        if (locationManager != null) {
-//            for (int i = 0; i < locationListeners.length; i++) {
-//                try {
-//                    locationManager.removeUpdates(locationListeners[i]);
-//                } catch (Exception ex) {
-//                    Log.i(TAG, "fail to remove location listners, ignore", ex);
-//                }
-//            }
-//        }
     }
 }
