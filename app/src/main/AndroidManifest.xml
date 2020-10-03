@@ -16,10 +16,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".UserLocationService" android:process=":location_service" />
+        <service
+            android:name="UserLocationService" >
+        </service>
+
     </application>
-    <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-
-
 </manifest>
