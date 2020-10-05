@@ -29,6 +29,9 @@ public class UserLocationService extends Service {
             Log.i(TAG, "onLocationChanged Called");
 
             if (location != null) {
+                /**
+                 * Stop listening to location once you get the location
+                 */
                 try {
                     locationManager.removeUpdates(this);
                 } catch (Exception e) {
@@ -132,5 +135,10 @@ public class UserLocationService extends Service {
     public void onDestroy() {
         Log.i(TAG, "onDestroy");
         super.onDestroy();
+        try {
+            locationManager.removeUpdates(myLocationListener);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to remove locationListener", e);
+        }
     }
 }
